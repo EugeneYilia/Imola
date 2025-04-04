@@ -38,7 +38,7 @@ def serve_home():
 # === 请求体模型 ===
 class QuestionRequest(BaseModel):
     question: str
-    model: Optional[str] = "llama3"
+    model: Optional[str] = "mistral:7b-instruct"
     top_k: Optional[int] = 3
 
 # === collection 映射逻辑 ===
