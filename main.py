@@ -86,6 +86,7 @@ def ask_with_context(user_question, collection_name, model="mistral:7b-instruct"
         "stream": False
     }
 
+    print(f"Payload: {payload}")
     response = requests.post(OLLAMA_URL, json=payload)
     if response.status_code == 200:
         return response.json()["response"]
