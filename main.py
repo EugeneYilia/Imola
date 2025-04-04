@@ -6,7 +6,7 @@ from sentence_transformers import SentenceTransformer
 from qdrant_client import QdrantClient
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-
+from fastapi.middleware.cors import CORSMiddleware
 # === 配置部分 ===
 MODEL_NAME = "BAAI/bge-large-zh"
 OLLAMA_URL = "http://localhost:11434/api/generate"
@@ -21,6 +21,14 @@ qdrant_client = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT)
 app = FastAPI(title="RAG 工程助手 API", description="结合 Qdrant + Ollama 的智能问答服务")
 # 挂载 static 目录（假设你将 HTML 放在当前目录）
 app.mount("/static", StaticFiles(directory="."), name="static")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # 或指定前端来源 ['http://localhost:3000']
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # 设置访问根路径时返回 index.html
 @app.get("/")
