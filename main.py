@@ -98,6 +98,7 @@ def rag_qa(req: QuestionRequest):
     print(f"Received question: {req}")
     collection = resolve_collection(req.question)
     answer = ask_with_context(req.question, collection, model=req.model, top_k=req.top_k)
+    print(f"Answer: {answer}")
     return {
         "answer": answer
     }
