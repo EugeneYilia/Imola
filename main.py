@@ -69,10 +69,14 @@ def retrieve_from_qdrant(query, collection_name="enterprise_knowledge", top_k=3)
 # === 构造 Prompt 并调用 Ollama ===
 def ask_with_context(user_question, collection_name, model="llama3", top_k=3):
     results = retrieve_from_qdrant(user_question, collection_name, top_k=top_k)
+    print(results)
     if not results:
         context = "（未能从知识库中检索到相关资料）"
     else:
-        context = "\n".join([f"【{r['section']}】\n{r['content']}" for r in results])
+        context = "\n".join([
+            f"【{r.get('section', r.get('source', '未注明来源'))}】\n{r.get('content', r.get('text', str(r)))}"
+            for r in results
+        ])
 
     prompt = f"""你是一个工程智能助手，请结合以下背景知识回答用户问题：\n\n已知资料：\n{context}\n\n问题：{user_question}\n请用专业、简明的方式回答。"""
 
