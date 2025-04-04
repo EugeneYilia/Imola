@@ -1,3 +1,5 @@
 qdrant-client
 sentence-transformers
 requests
+fastapi
+uvicorn

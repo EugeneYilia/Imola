@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RAG 智能问答助手</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 2rem;
+      background: #f9f9f9;
+    }
+    .container {
+      max-width: 700px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    h2 {
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+    label, select, textarea, button {
+      width: 100%;
+      margin-top: 1rem;
+    }
+    textarea {
+      height: 120px;
+      padding: 1rem;
+      font-size: 1rem;
+      resize: vertical;
+    }
+    button {
+      padding: 0.75rem;
+      font-size: 1rem;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #45a049;
+    }
+    #result {
+      margin-top: 2rem;
+      white-space: pre-wrap;
+      background: #f1f1f1;
+      padding: 1rem;
+      border-radius: 8px;
+      min-height: 80px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>RAG 智能问答助手</h2>
+    <label for="question">请输入你的问题：</label>
+    <textarea id="question" placeholder="例如：东欢坨项目的井筒设计深度是多少？"></textarea>
+
+    <label for="model">选择模型：</label>
+    <select id="model">
+      <option value="llama3">llama3</option>
+      <option value="mistral:7b-instruct">mistral:7b-instruct</option>
+      <option value="qwen:7b">qwen:7b</option>
+    </select>
+
+    <button onclick="askQuestion()">提交提问</button>
+
+    <div id="result"></div>
+  </div>
+
+  <script>
+    async function askQuestion() {
+      const question = document.getElementById("question").value.trim();
+      const model = document.getElementById("model").value;
+      const resultDiv = document.getElementById("result");
+
+      if (!question) {
+        alert("请输入问题内容。");
+        return;
+      }
+
+      resultDiv.innerHTML = "⏳ 正在思考中...";
+
+      try {
+        const response = await fetch("http://localhost:8000/ask", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ question, model })
+        });
+
+        const data = await response.json();
+        resultDiv.innerHTML = `📘 使用知识库：<b>${data.collection_used}</b><br/><br/><b>回答：</b><br/>${data.answer}`;
+      } catch (err) {
+        resultDiv.innerHTML = "❌ 请求失败，请检查服务是否启动。";
+      }
+    }
+  </script>
+</body>
+</html>
