@@ -57,9 +57,26 @@ def ask_with_context(user_question, model="llama3", top_k=3):
     else:
         return f"请求失败: {response.status_code}\n{response.text}"
 
+def resolve_collection(user_question: str):
+    # 简单关键词 → Collection 映射规则
+    mapping = {
+        "冻结AI": "enterprise_knowledge",
+        "吉安": "enterprise_knowledge",
+        "静态数据": "enterprise_knowledge",
+        "终孔偏斜": "terminal_deviation_data",
+        "邻孔间距": "neighbor_spacing_data",
+        "钻孔偏斜": "hole_deviation_data",
+    }
+
+    for keyword, collection in mapping.items():
+        if keyword in user_question:
+            return collection
+    return "enterprise_knowledge"  # 默认 fallback
+
 
 # === 示例 ===
 if __name__ == "__main__":
     query = "东欢坨项目的井筒设计深度是多少？"
+    collection_name = resolve_collection(user_question)
     answer = ask_with_context(query, model="mistral:7b-instruct")
     print("回答：", answer)
