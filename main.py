@@ -44,7 +44,7 @@ class QuestionRequest(BaseModel):
 # === collection 映射逻辑 ===
 def resolve_collection(user_question: str):
     mapping = {
-        "冻结AI": "enterprise_knowledge",
+        "大模型需求": "enterprise_knowledge",
         "吉安": "enterprise_knowledge",
         "静态数据": "enterprise_knowledge",
         "终孔偏斜": "terminal_deviation_data",
