@@ -67,7 +67,7 @@ def retrieve_from_qdrant(query, collection_name="enterprise_knowledge", top_k=3)
     return [hit.payload for hit in search_result]
 
 # === 构造 Prompt 并调用 Ollama ===
-def ask_with_context(user_question, collection_name, model="llama3", top_k=3):
+def ask_with_context(user_question, collection_name, model="mistral:7b-instruct", top_k=3):
     results = retrieve_from_qdrant(user_question, collection_name, top_k=top_k)
     print(results)
     if not results:
