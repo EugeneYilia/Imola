@@ -4,6 +4,8 @@ from typing import Optional
 import requests
 from sentence_transformers import SentenceTransformer
 from qdrant_client import QdrantClient
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
 # === 配置部分 ===
 MODEL_NAME = "BAAI/bge-large-zh"
@@ -17,6 +19,13 @@ qdrant_client = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT)
 
 # === FastAPI 初始化 ===
 app = FastAPI(title="RAG 工程助手 API", description="结合 Qdrant + Ollama 的智能问答服务")
+# 挂载 static 目录（假设你将 HTML 放在当前目录）
+app.mount("/static", StaticFiles(directory="."), name="static")
+
+# 设置访问根路径时返回 index.html
+@app.get("/")
+def serve_home():
+    return FileResponse("index.html")
 
 # === 请求体模型 ===
 class QuestionRequest(BaseModel):
@@ -74,6 +83,7 @@ def ask_with_context(user_question, collection_name, model="llama3", top_k=3):
 # === API 路由 ===
 @app.post("/ask")
 def rag_qa(req: QuestionRequest):
+    print(f"Received question: {req}")
     collection = resolve_collection(req.question)
     answer = ask_with_context(req.question, collection, model=req.model, top_k=req.top_k)
     return {
