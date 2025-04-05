@@ -3,3 +3,5 @@ sentence-transformers
 requests
 fastapi
 uvicorn
+colorama
+colorlog

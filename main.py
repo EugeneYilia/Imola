@@ -7,6 +7,28 @@ from qdrant_client import QdrantClient
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
+
+import logging
+from colorlog import ColoredFormatter
+
+LOG_FORMAT = "%(log_color)s%(asctime)s [%(levelname)s] %(message)s"
+LOG_DATEFMT = "%Y-%m-%d %H:%M:%S"
+LOG_COLORS = {
+    "DEBUG": "cyan",
+    "INFO": "green",
+    "WARNING": "yellow",
+    "ERROR": "red",
+    "CRITICAL": "bold_red",
+}
+
+formatter = ColoredFormatter(LOG_FORMAT, datefmt=LOG_DATEFMT, log_colors=LOG_COLORS)
+handler = logging.StreamHandler()
+handler.setFormatter(formatter)
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+logger.addHandler(handler)
+
 # === 配置部分 ===
 MODEL_NAME = "BAAI/bge-large-zh"
 OLLAMA_URL = "http://localhost:11434/api/generate"
@@ -69,7 +91,7 @@ def retrieve_from_qdrant(query, collection_name="enterprise_knowledge", top_k=3)
 # === 构造 Prompt 并调用 Ollama ===
 def ask_with_context(user_question, collection_name, model="mistral:7b-instruct", top_k=3):
     results = retrieve_from_qdrant(user_question, collection_name, top_k=top_k)
-    print(results)
+    logger.info(f"qdrant results: {results}")
     if not results:
         context = "（未能从知识库中检索到相关资料）"
     else:
@@ -86,7 +108,7 @@ def ask_with_context(user_question, collection_name, model="mistral:7b-instruct"
         "stream": False
     }
 
-    print(f"Payload: {payload}")
+    logger.info(f"Request llm server payload: {payload}")
     response = requests.post(OLLAMA_URL, json=payload)
     if response.status_code == 200:
         return response.json()["response"]
@@ -96,10 +118,21 @@ def ask_with_context(user_question, collection_name, model="mistral:7b-instruct"
 # === API 路由 ===
 @app.post("/ask")
 def rag_qa(req: QuestionRequest):
-    print(f"Received question: {req}")
+    logger.info(f"Received question: {req}")
     collection = resolve_collection(req.question)
     answer = ask_with_context(req.question, collection, model=req.model, top_k=req.top_k)
-    print(f"Answer: {answer}")
+    logger.info(f"Answer: {answer}")
     return {
         "answer": answer
     }
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=True,
+        log_config="log_config.yml"
+    )
