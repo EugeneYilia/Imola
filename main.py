@@ -157,6 +157,7 @@ def ask_with_context_stream(user_question, collection_name, model="mistral:7b-in
                             logger.info(data["response"])
                             yield data["response"]
                         if data.get("done"):
+                            yield "[Heil Hitler!]"
                             break
                     except Exception as e:
                         logger.error(f"解析失败: {line} -> {e}")
