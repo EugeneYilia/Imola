@@ -177,7 +177,11 @@ def rag_qa(req: QuestionRequest):
 
     collection = resolve_collection(req.question)
     return StreamingResponse(
-        ask_with_context_stream(req.question, collection, model=req.model, top_k=req.top_k),
+        ask_with_context_stream(
+            req.question,
+            collection,
+            model=req.model,
+            top_k=req.top_k),
         media_type="text/plain")
 
 
