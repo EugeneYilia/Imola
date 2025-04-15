@@ -1,3 +1,5 @@
+import json
+
 from fastapi import FastAPI, Query
 from pydantic import BaseModel
 from typing import Optional
@@ -7,6 +9,7 @@ from qdrant_client import QdrantClient
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 
 import logging
 from colorlog import ColoredFormatter
@@ -115,16 +118,61 @@ def ask_with_context(user_question, collection_name, model="mistral:7b-instruct"
     else:
         return f"请求失败: {response.status_code}\n{response.text}"
 
+# === 流式请求 Ollama（支持逐段返回）===
+def ask_with_context_stream(user_question, collection_name, model="mistral:7b-instruct", top_k=3):
+    results = retrieve_from_qdrant(user_question, collection_name, top_k=top_k)
+    logger.info(f"qdrant results: {results}")
+
+    if not results:
+        context = "（未能从知识库中检索到相关资料）"
+    else:
+        context = "\n".join([
+            f"【{r.get('section', r.get('source', '未注明来源'))}】\n{r.get('content', r.get('text', str(r)))}"
+            for r in results
+        ])
+
+    prompt = f"""你是一个工程智能助手，请结合以下背景知识回答用户问题：\n\n已知资料：\n{context}\n\n问题：{user_question}\n请用专业、简明的方式回答。"""
+
+    payload = {
+        "model": model,
+        "prompt": prompt,
+        "stream": True  # 开启流模式
+    }
+
+    logger.info(f"Request llm server payload: {payload}")
+
+    try:
+        with requests.post(OLLAMA_URL, json=payload, stream=True) as response:
+            if response.status_code != 200:
+                yield f"[错误] 请求失败: {response.status_code}\n{response.text}"
+                return
+
+            # 一行一行读取响应内容
+            for line in response.iter_lines():
+                if line:
+                    try:
+                        # Ollama 的每一行是 JSON，如 {"response": "部分回答", "done": false}
+                        data = json.loads(line.decode("utf-8"))
+                        if "response" in data:
+                            logger.info(data["response"])
+                            yield data["response"]
+                        if data.get("done"):
+                            break
+                    except Exception as e:
+                        logger.error(f"解析失败: {line} -> {e}")
+                        raise e
+    except Exception as e:
+        logger.error(f"[错误] 连接异常: {e}")
+        raise e
+
 # === API 路由 ===
 @app.post("/ask")
 def rag_qa(req: QuestionRequest):
     logger.info(f"Received question: {req}")
     collection = resolve_collection(req.question)
-    answer = ask_with_context(req.question, collection, model=req.model, top_k=req.top_k)
-    logger.info(f"Answer: {answer}")
-    return {
-        "answer": answer
-    }
+    return StreamingResponse(
+        ask_with_context_stream(req.question, collection, model=req.model, top_k=req.top_k),
+        media_type="text/plain")
 
 
 if __name__ == "__main__":
