@@ -1,3 +1,4 @@
+import unicodedata
 import json
 import uuid
 from fastapi import FastAPI, Query
@@ -121,6 +122,10 @@ def ask_with_context(user_question, collection_name, model="mistral:7b-instruct"
     else:
         return f"请求失败: {response.status_code}\n{response.text}"
 
+def is_punctuation(char):
+    logger.info(f"传入的 char：{repr(char)}，长度：{len(char)}")
+    return isinstance(char, str) and len(char) == 1 and unicodedata.category(char).startswith('P')
+
 # === 流式请求 Ollama（支持逐段返回）===
 def ask_with_context_stream(user_question, collection_name, model="mistral:7b-instruct", top_k=3):
     results = retrieve_from_qdrant(user_question, collection_name, top_k=top_k)
@@ -150,6 +155,8 @@ def ask_with_context_stream(user_question, collection_name, model="mistral:7b-in
                 yield f"[错误] 请求失败: {response.status_code}"
                 return
 
+            response_buffer = ""
+            is_ready_to_send = False
             # 一行一行读取响应内容
             for line in response.iter_lines():
                 if line:
@@ -158,9 +165,20 @@ def ask_with_context_stream(user_question, collection_name, model="mistral:7b-in
                         data = json.loads(line.decode("utf-8"))
                         logger.info(f"Request llm server response: {data}")
                         if "response" in data:
-                            yield data["response"] + "\n"
+                            if is_punctuation(data["response"]):
+                                response_buffer += data["response"] + "\n"
+                                is_ready_to_send = True
+                            else:
+                                if is_ready_to_send:
+                                    is_ready_to_send = False
+                                    chunked_response = response_buffer
+                                    response_buffer = data["response"]
+                                    logger.info(f"llm server response: {chunked_response}")
+                                    yield chunked_response
                         if data.get("done"):
-                            yield "[Heil Hitler!]" + "\n"
+                            chunked_response = response_buffer.removesuffix("\n") + "[Heil Hitler!]" + "\n"
+                            logger.info(f"llm server response: {chunked_response}")
+                            yield chunked_response
                             break
                     except Exception as e:
                         logger.error(f"解析失败: {line} -> {e}")
