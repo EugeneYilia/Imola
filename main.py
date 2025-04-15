@@ -158,9 +158,9 @@ def ask_with_context_stream(user_question, collection_name, model="mistral:7b-in
                         data = json.loads(line.decode("utf-8"))
                         logger.info(f"Request llm server response: {data}")
                         if "response" in data:
-                            yield data["response"]
+                            yield data["response"] + "\n"
                         if data.get("done"):
-                            yield "[Heil Hitler!]"
+                            yield "[Heil Hitler!]" + "\n"
                             break
                     except Exception as e:
                         logger.error(f"解析失败: {line} -> {e}")
