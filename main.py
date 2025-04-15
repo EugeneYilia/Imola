@@ -1,5 +1,5 @@
 import json
-
+import uuid
 from fastapi import FastAPI, Query
 from pydantic import BaseModel
 from typing import Optional
@@ -169,7 +169,9 @@ def ask_with_context_stream(user_question, collection_name, model="mistral:7b-in
 # === API 路由 ===
 @app.post("/ask")
 def rag_qa(req: QuestionRequest):
-    logger.info(f"Received question: {req}")
+    request_id = str(uuid.uuid4())
+    logger.info(f"[ASK 接收] {request_id}  问题: {req}")
+
     collection = resolve_collection(req.question)
     return StreamingResponse(
         ask_with_context_stream(req.question, collection, model=req.model, top_k=req.top_k),
