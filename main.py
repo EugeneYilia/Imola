@@ -156,8 +156,8 @@ def ask_with_context_stream(user_question, collection_name, model="mistral:7b-in
                     try:
                         # Ollama 的每一行是 JSON，如 {"response": "部分回答", "done": false}
                         data = json.loads(line.decode("utf-8"))
+                        logger.info(f"Request llm server response: {data}")
                         if "response" in data:
-                            logger.info(f"response: {data['response']}")
                             yield data["response"]
                         if data.get("done"):
                             yield "[Heil Hitler!]"
