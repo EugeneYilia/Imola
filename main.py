@@ -144,7 +144,7 @@ def ask_with_context_stream(user_question, collection_name, model="mistral:7b-in
     try:
         with requests.post(OLLAMA_URL, json=payload, stream=True) as response:
             if response.status_code != 200:
-                yield f"[错误] 请求失败: {response.status_code}\n{response.text}"
+                yield f"[错误] 请求失败: {response.status_code}"
                 return
 
             # 一行一行读取响应内容
