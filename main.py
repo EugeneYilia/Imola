@@ -30,6 +30,9 @@ handler.setFormatter(formatter)
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
+
+if logger.hasHandlers():
+    logger.handlers.clear()
 logger.addHandler(handler)
 
 # === 配置部分 ===
