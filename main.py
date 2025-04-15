@@ -182,7 +182,10 @@ def rag_qa(req: QuestionRequest):
             collection,
             model=req.model,
             top_k=req.top_k),
-        media_type="text/plain")
+        media_type="text/plain",
+        status_code=200,
+        headers={"X-Accel-Buffering": "no"}
+    )
 
 
 if __name__ == "__main__":
