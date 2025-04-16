@@ -124,15 +124,21 @@ def ask_with_context(user_question, collection_name, model="mistral:7b-instruct"
         return f"请求失败: {response.status_code}\n{response.text}"
 
 def is_punctuation(char):
-    # logger.info(f"传入的 char：{repr(char)}，长度：{len(char)}")
-    if isinstance(char, str) and len(char) == 1:
+
+    if not isinstance(char, str) or len(char) != 1:
+        # logger.info(f"传入的 char：{repr(char)}，长度：{len(char)}   not isinstance(char, str) or len(char) != 1: {False}")
         return False
 
     # 放行英文标点符号
-    if char in string.punctuation:
+    if char in string.punctuation and ord(char) < 128:
+        # logger.info(f"传入的 char：{repr(char)}，长度：{len(char)}   char in string.punctuation and ord(char) < 128: {False}")
+        return False
+
+    if char in ["(", ")", "{", "}", "[", "]"]:
         return False
 
     # 只算中文标点符号
+    # logger.info(f"传入的 char：{repr(char)}，长度：{len(char)}   {unicodedata.category(char).startswith('P')}")
     return unicodedata.category(char).startswith('P')
 
 # === 流式请求 Ollama（支持逐段返回）===
@@ -172,7 +178,7 @@ def ask_with_context_stream(user_question, collection_name, model="mistral:7b-in
                     try:
                         # Ollama 的每一行是 JSON，如 {"response": "部分回答", "done": false}
                         data = json.loads(line.decode("utf-8"))
-                        logger.info(f"Request llm server response: {data}")
+                        # logger.info(f"Request llm server response: {data}")
                         response = data["response"].strip()
                         if response != "" :
                             if is_punctuation(response):
