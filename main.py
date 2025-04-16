@@ -1,6 +1,7 @@
 import unicodedata
 import json
 import uuid
+import string
 from fastapi import FastAPI, Query
 from pydantic import BaseModel
 from typing import Optional
@@ -124,7 +125,15 @@ def ask_with_context(user_question, collection_name, model="mistral:7b-instruct"
 
 def is_punctuation(char):
     # logger.info(f"传入的 char：{repr(char)}，长度：{len(char)}")
-    return isinstance(char, str) and len(char) == 1 and unicodedata.category(char).startswith('P')
+    if isinstance(char, str) and len(char) == 1:
+        return False
+
+    # 放行英文标点符号
+    if char in string.punctuation:
+        return False
+
+    # 只算中文标点符号
+    return unicodedata.category(char).startswith('P')
 
 # === 流式请求 Ollama（支持逐段返回）===
 def ask_with_context_stream(user_question, collection_name, model="mistral:7b-instruct", top_k=3):
