@@ -123,7 +123,7 @@ def ask_with_context(user_question, collection_name, model="mistral:7b-instruct"
         return f"请求失败: {response.status_code}\n{response.text}"
 
 def is_punctuation(char):
-    logger.info(f"传入的 char：{repr(char)}，长度：{len(char)}")
+    # logger.info(f"传入的 char：{repr(char)}，长度：{len(char)}")
     return isinstance(char, str) and len(char) == 1 and unicodedata.category(char).startswith('P')
 
 # === 流式请求 Ollama（支持逐段返回）===
@@ -164,17 +164,20 @@ def ask_with_context_stream(user_question, collection_name, model="mistral:7b-in
                         # Ollama 的每一行是 JSON，如 {"response": "部分回答", "done": false}
                         data = json.loads(line.decode("utf-8"))
                         logger.info(f"Request llm server response: {data}")
-                        if "response" in data:
-                            if is_punctuation(data["response"]):
-                                response_buffer += data["response"] + "\n"
+                        response = data["response"].strip()
+                        if response != "" :
+                            if is_punctuation(response):
+                                response_buffer += response + "\n"
                                 is_ready_to_send = True
                             else:
                                 if is_ready_to_send:
                                     is_ready_to_send = False
                                     chunked_response = response_buffer
-                                    response_buffer = data["response"]
+                                    response_buffer = response
                                     logger.info(f"llm server response: {chunked_response}")
                                     yield chunked_response
+                                else:
+                                    response_buffer += response
                         if data.get("done"):
                             chunked_response = response_buffer.removesuffix("\n") + "[Heil Hitler!]" + "\n"
                             logger.info(f"llm server response: {chunked_response}")
