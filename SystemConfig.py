@@ -1,7 +1,4 @@
 import json  # 加到 import 区域
-import logging
-
-logger = logging.getLogger(__name__)
 
 # === 加载 GPU 配置 ===
 with open("system_config.json", "r", encoding="utf-8") as f:
