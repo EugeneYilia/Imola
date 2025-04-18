@@ -3,6 +3,7 @@ import json
 import uuid
 import string
 from fastapi import FastAPI, Query
+from contextlib import asynccontextmanager
 from pydantic import BaseModel
 from typing import Optional
 import requests
@@ -18,26 +19,7 @@ from colorlog import ColoredFormatter
 
 import SystemConfig
 
-LOG_FORMAT = "%(log_color)s%(asctime)s [%(levelname)s] %(message)s"
-LOG_DATEFMT = "%Y-%m-%d %H:%M:%S"
-LOG_COLORS = {
-    "DEBUG": "cyan",
-    "INFO": "green",
-    "WARNING": "yellow",
-    "ERROR": "red",
-    "CRITICAL": "bold_red",
-}
-
-formatter = ColoredFormatter(LOG_FORMAT, datefmt=LOG_DATEFMT, log_colors=LOG_COLORS)
-handler = logging.StreamHandler()
-handler.setFormatter(formatter)
-
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
-
-if logger.hasHandlers():
-    logger.handlers.clear()
-logger.addHandler(handler)
+logger = logging.getLogger(__name__)
 
 # === 配置部分 ===
 MODEL_NAME = "BAAI/bge-large-zh"
@@ -50,7 +32,18 @@ embedding_model = SentenceTransformer(MODEL_NAME)
 qdrant_client = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT)
 
 # === FastAPI 初始化 ===
-app = FastAPI(title="RAG 工程助手 API", description="结合 Qdrant + Ollama 的智能问答服务")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # ✅ 启动前执行
+    logger.info("FastAPI 启动：is_use_gpu: %s", SystemConfig.is_use_gpu)
+    logger.info("FastAPI 启动：is_dev_mode: %s", SystemConfig.is_dev_mode)
+
+    yield  # 🟢 应用运行中
+
+    # ✅ 关闭前执行（可选）
+    logger.info("FastAPI 即将关闭")
+app = FastAPI(title="RAG 工程助手 API", description="结合 Qdrant + Ollama 的智能问答服务", lifespan=lifespan)
 # 挂载 static 目录（假设你将 HTML 放在当前目录）
 app.mount("/static", StaticFiles(directory="."), name="static")
 
@@ -224,6 +217,8 @@ def rag_qa(req: QuestionRequest):
         status_code=200,
         headers={"X-Accel-Buffering": "no"}
     )
+
+
 
 
 if __name__ == "__main__":
