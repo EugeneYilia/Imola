@@ -16,6 +16,8 @@ from fastapi.responses import StreamingResponse
 import logging
 from colorlog import ColoredFormatter
 
+import SystemConfig
+
 LOG_FORMAT = "%(log_color)s%(asctime)s [%(levelname)s] %(message)s"
 LOG_DATEFMT = "%Y-%m-%d %H:%M:%S"
 LOG_COLORS = {
@@ -226,10 +228,20 @@ def rag_qa(req: QuestionRequest):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(
-        "main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True,
-        log_config="log_config.yml"
-    )
+
+    if SystemConfig.is_dev_mode:
+        uvicorn.run(
+            "main:app",
+            host="0.0.0.0",
+            port=8000,
+            reload=SystemConfig.is_dev_mode,
+            log_config="log_config.yml"
+        )
+    else:
+        uvicorn.run(
+            app,
+            host="0.0.0.0",
+            port=8000,
+            reload=SystemConfig.is_dev_mode,
+            log_config="log_config.yml"
+        )
