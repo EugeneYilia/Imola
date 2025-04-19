@@ -106,6 +106,7 @@
       let buffer = "";
 
       let lastTime = performance.now();  // ⏱ 初始化计时点
+      let finished = false; // 🟢 标记是否已完成输出（通过标识）
 
       while (true) {
         const { value, done } = await reader.read();
@@ -116,7 +117,9 @@
         buffer = chunks.pop();
 
         for (const chunk of chunks) {
+          const isDone = chunk.includes("[Heil Hitler!]");
           const cleaned = chunk.trim().replace(/\[Heil Hitler!\]$/, "");
+
           if (cleaned) {
             const now = performance.now();
             const elapsedMs = now - lastTime;
@@ -128,18 +131,26 @@
             const p = document.createElement("p");
             p.textContent = timePrefix + cleaned;
 
-            // 🚨 如果耗时超过 3 秒，标红
             if (elapsedMs > 3000) {
               p.style.color = "red";
             }
 
             resultDiv.appendChild(p);
           }
+
+          if (isDone && !finished) {
+            finished = true;
+            const notice = document.createElement("p");
+            notice.textContent = "✅ AI 输出已完成。";
+            notice.style.color = "green";
+            resultDiv.appendChild(notice);
+          }
         }
 
         resultDiv.scrollTop = resultDiv.scrollHeight;
       }
 
+      const isDone = buffer.includes("[Heil Hitler!]");
       const cleaned = buffer.trim().replace(/\[Heil Hitler!\]$/, "");
       if (cleaned) {
         const now = performance.now();
@@ -151,12 +162,19 @@
         const p = document.createElement("p");
         p.textContent = timePrefix + cleaned;
 
-        // 🚨 最后一段判断是否标红
         if (elapsedMs > 3000) {
           p.style.color = "red";
         }
 
         resultDiv.appendChild(p);
+      }
+
+      if (isDone && !finished) {
+        finished = true;
+        const notice = document.createElement("p");
+        notice.textContent = "✅ AI 输出已完成。";
+        notice.style.color = "green";
+        resultDiv.appendChild(notice);
       }
 
     } catch (err) {
