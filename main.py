@@ -27,6 +27,8 @@ OLLAMA_URL = "http://localhost:11434/api/generate"
 QDRANT_HOST = "localhost"
 QDRANT_PORT = 6333
 
+DEFAULT_TOP_K = 1
+
 # 初始化嵌入模型 & Qdrant 客户端
 embedding_model = SentenceTransformer(MODEL_NAME)
 qdrant_client = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT)
@@ -64,7 +66,7 @@ def serve_home():
 class QuestionRequest(BaseModel):
     question: str
     model: Optional[str] = "mistral:7b-instruct"
-    top_k: Optional[int] = 3
+    top_k: Optional[int] = DEFAULT_TOP_K
 
 # === collection 映射逻辑 ===
 def resolve_collection(user_question: str):
@@ -82,7 +84,7 @@ def resolve_collection(user_question: str):
     return "enterprise_knowledge"
 
 # === Qdrant 检索 ===
-def retrieve_from_qdrant(query, collection_name="enterprise_knowledge", top_k=3):
+def retrieve_from_qdrant(query, collection_name="enterprise_knowledge", top_k=DEFAULT_TOP_K):
     query_vec = embedding_model.encode([query], normalize_embeddings=True)[0]
     search_result = qdrant_client.search(
         collection_name=collection_name,
@@ -92,7 +94,7 @@ def retrieve_from_qdrant(query, collection_name="enterprise_knowledge", top_k=3)
     return [hit.payload for hit in search_result]
 
 # === 构造 Prompt 并调用 Ollama ===
-def ask_with_context(user_question, collection_name, model="mistral:7b-instruct", top_k=3):
+def ask_with_context(user_question, collection_name, model="mistral:7b-instruct", top_k=DEFAULT_TOP_K):
     results = retrieve_from_qdrant(user_question, collection_name, top_k=top_k)
     logger.info(f"qdrant results: {results}")
     if not results:
@@ -137,7 +139,7 @@ def is_punctuation(char):
     return unicodedata.category(char).startswith('P')
 
 # === 流式请求 Ollama（支持逐段返回）===
-def ask_with_context_stream(user_question, collection_name, model="mistral:7b-instruct", top_k=3):
+def ask_with_context_stream(user_question, collection_name, model="mistral:7b-instruct", top_k=DEFAULT_TOP_K):
     results = retrieve_from_qdrant(user_question, collection_name, top_k=top_k)
     logger.info(f"qdrant results: {results}")
 

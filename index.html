@@ -72,34 +72,73 @@
     <div id="result"></div>
   </div>
 
-  <script>
-    async function askQuestion() {
-      const question = document.getElementById("question").value.trim();
-      const model = document.getElementById("model").value;
-      const resultDiv = document.getElementById("result");
+<script>
+  async function askQuestion() {
+    const question = document.getElementById("question").value.trim();
+    const model = document.getElementById("model").value;
+    const resultDiv = document.getElementById("result");
 
-      if (!question) {
-        alert("请输入问题内容。");
+    if (!question) {
+      alert("请输入问题内容。");
+      return;
+    }
+
+    resultDiv.innerHTML = "⏳ 正在思考中...";
+
+    try {
+      const response = await fetch("http://localhost:8000/ask", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ question, model })
+      });
+
+      if (!response.ok) {
+        resultDiv.innerHTML = "❌ 请求失败，请检查服务是否启动。";
         return;
       }
 
-      resultDiv.innerHTML = "⏳ 正在思考中...";
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder("utf-8");
+      resultDiv.innerHTML = "";
+      let buffer = "";
 
-      try {
-        const response = await fetch("http://localhost:8000/ask", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ question, model })
-        });
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
 
-        const data = await response.json();
-        resultDiv.innerHTML = `📘 使用知识库：<b>${data.collection_used}</b><br/><br/><b>回答：</b><br/>${data.answer}`;
-      } catch (err) {
-        resultDiv.innerHTML = "❌ 请求失败，请检查服务是否启动。";
+        buffer += decoder.decode(value, { stream: true });
+        const chunks = buffer.split("\n");
+        buffer = chunks.pop();
+
+        for (const chunk of chunks) {
+          const cleaned = chunk.trim().replace(/\[Heil Hitler!\]$/, "");
+          if (cleaned) {
+            const p = document.createElement("p");
+            p.textContent = cleaned;
+            resultDiv.appendChild(p);
+          }
+        }
+
+        resultDiv.scrollTop = resultDiv.scrollHeight;
       }
+
+      // 最后一段（可能也有尾部标记）
+      const cleaned = buffer.trim().replace(/\[Heil Hitler!\]$/, "");
+      if (cleaned) {
+        const p = document.createElement("p");
+        p.textContent = cleaned;
+        resultDiv.appendChild(p);
+      }
+
+    } catch (err) {
+      console.error("请求错误:", err);
+      resultDiv.innerHTML = "❌ 请求失败，请检查服务是否启动。";
     }
-  </script>
+  }
+</script>
+
+
 </body>
 </html>
