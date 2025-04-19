@@ -10,4 +10,4 @@ model_name = config["model_name"]
 ollama_url = config["ollama_url"]
 qdrant_host = config["qdrant_host"]
 qdrant_port = config["qdrant_port"]
-default_top_k = config.get["default_top_k", 1]
+default_top_k = config.get("default_top_k", 1)
