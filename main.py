@@ -143,7 +143,7 @@ def ask_with_context_stream(user_question, collection_name, model="mistral:7b-in
             for r in results
         ])
 
-    prompt = f"""你是一个工程智能助手，请结合以下背景知识回答用户问题，中间尽可能多的使用中文标点符号进行分割，确保每个分割后的短句字数都差不多：\n\n
+    prompt = f"""你是一个工程智能助手，请结合以下背景知识回答用户问题，中间尽可能多的使用标点符号进行分割，确保每个分割后的短句字数都差不多，注释性质来解释词语的不算：\n\n
     已知资料：\n{context}\n\n问题：{user_question}\n请用专业、简明的方式回答。"""
 
     payload = {
