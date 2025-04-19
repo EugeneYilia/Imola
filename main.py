@@ -123,7 +123,8 @@ def is_punctuation(char):
         # logger.info(f"传入的 char：{repr(char)}，长度：{len(char)}   char in string.punctuation and ord(char) < 128: {False}")
         return False
 
-    if char in ["（", "）", "(", ")", "{", "}", "[", "]"]:
+    # 括号与引号
+    if char in ["（", "）", "(", ")", "{", "}", "[", "]", "'", "\"", "‘", "“"]:
         return False
 
     # 只算中文标点符号
@@ -146,7 +147,7 @@ def ask_with_context_stream(user_question, collection_name, model="mistral:7b-in
     prompt = f"""你是一个工程智能助手，请结合以下背景资料和用户问题，用**中文**回答用户问题。回答时请注意：
 
     1. 尽可能只用中文，不使用任何英文术语（如 depth, hole 等），应翻译成对应的中文表达；
-    2. 回答时尽量使用中文标点符号断句，使每一句长度相对均匀，推荐每句话控制在6-8字左右；
+    2. 回答时尽量使用中文标点符号断句，使每一句长度相对均匀，推荐每句话控制在6-8字左右，用括号引号分割不算；
     3. 如果内容较长，请主动拆分为多个短句连续描述；
     4. 不需要注释词语的定义，仅保留内容本身；
     5. 回答风格应专业、简明、自然、口语化，便于理解与语音播放。
