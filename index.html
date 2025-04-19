@@ -84,7 +84,7 @@
       return;
     }
 
-    resultDiv.innerHTML = "⏳ 正在思考中...";
+    resultDiv.innerHTML = "<p id='thinking'>⏳ 正在思考中...</p>";
 
     try {
       const response = await fetch("http://localhost:8000/ask", {
@@ -102,7 +102,7 @@
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder("utf-8");
-      resultDiv.innerHTML = "";
+
       let buffer = "";
 
       let lastTime = performance.now();  // ⏱ 初始化计时点
@@ -121,6 +121,7 @@
           const cleaned = chunk.trim().replace(/\[Heil Hitler!\]$/, "");
 
           if (cleaned) {
+
             const now = performance.now();
             const elapsedMs = now - lastTime;
             lastTime = now;
@@ -134,6 +135,9 @@
             if (elapsedMs > 3000) {
               p.style.color = "red";
             }
+
+            const thinking = document.getElementById("thinking");
+            if (thinking) thinking.remove();
 
             resultDiv.appendChild(p);
           }
