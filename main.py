@@ -123,7 +123,7 @@ def is_punctuation(char):
         # logger.info(f"传入的 char：{repr(char)}，长度：{len(char)}   char in string.punctuation and ord(char) < 128: {False}")
         return False
 
-    if char in ["(", ")", "{", "}", "[", "]"]:
+    if char in ["（", "）", "(", ")", "{", "}", "[", "]"]:
         return False
 
     # 只算中文标点符号
