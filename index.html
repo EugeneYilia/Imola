@@ -104,6 +104,8 @@
       resultDiv.innerHTML = "";
       let buffer = "";
 
+      let lastTime = performance.now();  // ⏱ 初始化计时点
+
       while (true) {
         const { value, done } = await reader.read();
         if (done) break;
@@ -115,8 +117,21 @@
         for (const chunk of chunks) {
           const cleaned = chunk.trim().replace(/\[Heil Hitler!\]$/, "");
           if (cleaned) {
+            const now = performance.now();
+            const elapsedMs = now - lastTime;
+            lastTime = now;
+            const seconds = Math.floor(elapsedMs / 1000);
+            const milliseconds = Math.floor(elapsedMs % 1000);
+            const timePrefix = `[+${seconds}s ${milliseconds}ms] `;
+
             const p = document.createElement("p");
-            p.textContent = cleaned;
+            p.textContent = timePrefix + cleaned;
+
+            // 🚨 如果耗时超过 3 秒，标红
+            if (elapsedMs > 3000) {
+              p.style.color = "red";
+            }
+
             resultDiv.appendChild(p);
           }
         }
@@ -124,11 +139,22 @@
         resultDiv.scrollTop = resultDiv.scrollHeight;
       }
 
-      // 最后一段（可能也有尾部标记）
       const cleaned = buffer.trim().replace(/\[Heil Hitler!\]$/, "");
       if (cleaned) {
+        const now = performance.now();
+        const elapsedMs = now - lastTime;
+        const seconds = Math.floor(elapsedMs / 1000);
+        const milliseconds = Math.floor(elapsedMs % 1000);
+        const timePrefix = `[+${seconds}s ${milliseconds}ms] `;
+
         const p = document.createElement("p");
-        p.textContent = cleaned;
+        p.textContent = timePrefix + cleaned;
+
+        // 🚨 最后一段判断是否标红
+        if (elapsedMs > 3000) {
+          p.style.color = "red";
+        }
+
         resultDiv.appendChild(p);
       }
 
