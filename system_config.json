@@ -1,4 +1,9 @@
 {
   "is_use_gpu" : true,
-  "is_dev_mode": false
+  "is_dev_mode": false,
+  "model_name" : "BAAI/bge-large-zh",
+  "ollama_url" : "http://localhost:11434/api/generate",
+  "qdrant_host" : "localhost",
+  "qdrant_port" : 6333,
+  "default_top_k" : 1
 }

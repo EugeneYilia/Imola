@@ -21,17 +21,9 @@ import SystemConfig
 
 logger = logging.getLogger(__name__)
 
-# === 配置部分 ===
-MODEL_NAME = "BAAI/bge-large-zh"
-OLLAMA_URL = "http://localhost:11434/api/generate"
-QDRANT_HOST = "localhost"
-QDRANT_PORT = 6333
-
-DEFAULT_TOP_K = 1
-
 # 初始化嵌入模型 & Qdrant 客户端
-embedding_model = SentenceTransformer(MODEL_NAME)
-qdrant_client = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT)
+embedding_model = SentenceTransformer(SystemConfig.model_name)
+qdrant_client = QdrantClient(host=SystemConfig.qdrant_host, port=SystemConfig.qdrant_port)
 
 # === FastAPI 初始化 ===
 
@@ -66,7 +58,7 @@ def serve_home():
 class QuestionRequest(BaseModel):
     question: str
     model: Optional[str] = "mistral:7b-instruct"
-    top_k: Optional[int] = DEFAULT_TOP_K
+    top_k: Optional[int] = SystemConfig.default_top_k
 
 # === collection 映射逻辑 ===
 def resolve_collection(user_question: str):
@@ -84,7 +76,7 @@ def resolve_collection(user_question: str):
     return "enterprise_knowledge"
 
 # === Qdrant 检索 ===
-def retrieve_from_qdrant(query, collection_name="enterprise_knowledge", top_k=DEFAULT_TOP_K):
+def retrieve_from_qdrant(query, collection_name="enterprise_knowledge", top_k=SystemConfig.default_top_k):
     query_vec = embedding_model.encode([query], normalize_embeddings=True)[0]
     search_result = qdrant_client.search(
         collection_name=collection_name,
@@ -94,7 +86,7 @@ def retrieve_from_qdrant(query, collection_name="enterprise_knowledge", top_k=DE
     return [hit.payload for hit in search_result]
 
 # === 构造 Prompt 并调用 Ollama ===
-def ask_with_context(user_question, collection_name, model="mistral:7b-instruct", top_k=DEFAULT_TOP_K):
+def ask_with_context(user_question, collection_name, model="mistral:7b-instruct", top_k=SystemConfig.default_top_k):
     results = retrieve_from_qdrant(user_question, collection_name, top_k=top_k)
     logger.info(f"qdrant results: {results}")
     if not results:
@@ -114,7 +106,7 @@ def ask_with_context(user_question, collection_name, model="mistral:7b-instruct"
     }
 
     logger.info(f"Request llm server payload: {payload}")
-    response = requests.post(OLLAMA_URL, json=payload)
+    response = requests.post(SystemConfig.ollama_url, json=payload)
     if response.status_code == 200:
         return response.json()["response"]
     else:
@@ -139,7 +131,7 @@ def is_punctuation(char):
     return unicodedata.category(char).startswith('P')
 
 # === 流式请求 Ollama（支持逐段返回）===
-def ask_with_context_stream(user_question, collection_name, model="mistral:7b-instruct", top_k=DEFAULT_TOP_K):
+def ask_with_context_stream(user_question, collection_name, model="mistral:7b-instruct", top_k=SystemConfig.default_top_k):
     results = retrieve_from_qdrant(user_question, collection_name, top_k=top_k)
     logger.info(f"qdrant results: {results}")
 
@@ -162,7 +154,7 @@ def ask_with_context_stream(user_question, collection_name, model="mistral:7b-in
     logger.info(f"Request llm server payload: {payload}")
 
     try:
-        with requests.post(OLLAMA_URL, json=payload, stream=True) as response:
+        with requests.post(SystemConfig.ollama_url, json=payload, stream=True) as response:
             if response.status_code != 200:
                 yield f"[错误] 请求失败: {response.status_code}"
                 return
