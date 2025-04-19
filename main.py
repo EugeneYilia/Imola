@@ -39,7 +39,7 @@ async def lifespan(app: FastAPI):
     logger.info("FastAPI 即将关闭")
 app = FastAPI(title="RAG 工程助手 API", description="结合 Qdrant + Ollama 的智能问答服务", lifespan=lifespan)
 # 挂载 static 目录（假设你将 HTML 放在当前目录）
-app.mount("/static", StaticFiles(directory="."), name="static")
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 app.add_middleware(
     CORSMiddleware,
