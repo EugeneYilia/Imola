@@ -230,7 +230,7 @@ def ask_with_context_stream_ollama_mistral(user_question, collection_name, model
         raise e
 
 # === 流式请求 Ollama（支持逐段返回）===
-def ask_with_context_stream(user_question, collection_name, model="mistral:7b-instruct", top_k=SystemConfig.default_top_k):
+def ask_with_context_stream_vllm_qwen(user_question, collection_name, top_k=SystemConfig.default_top_k):
     results = retrieve_from_qdrant(user_question, collection_name, top_k=top_k)
     logger.info(f"qdrant results: {results}")
 
@@ -335,11 +335,11 @@ def rag_qa(req: QuestionRequest):
     logger.info(f"[ASK 接收] {request_id}  问题: {req}")
 
     collection = resolve_collection(req.question)
+    # default use qwen llm
     return StreamingResponse(
-        ask_with_context_stream(
+        ask_with_context_stream_vllm_qwen(
             req.question,
             collection,
-            model=req.model,
             top_k=req.top_k),
         media_type="text/plain",
         status_code=200,
