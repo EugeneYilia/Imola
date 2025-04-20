@@ -57,7 +57,7 @@ def serve_home():
 # === 请求体模型 ===
 class QuestionRequest(BaseModel):
     question: str
-    model: Optional[str] = "mistral:7b-instruct"
+    model: Optional[str] = "Qwen1.5-1.8B-Chat-AWQ"
     top_k: Optional[int] = SystemConfig.default_top_k
 
 # === collection 映射逻辑 ===
@@ -243,7 +243,7 @@ def ask_with_context_stream_vllm_qwen(user_question, collection_name, top_k=Syst
             for r in results
         ])
 
-    prompt = f"""你是一名工程智能助手，请根据以下背景资料和用户问题，输出专业、自然、简洁的中文回答。
+    system_role = """你是一名工程智能助手，请根据以下背景资料和用户问题，输出专业、自然、简洁的中文回答。
 
     回答时请遵守以下规范：
     1. 所有内容请使用中文表达，不要出现英文单词或术语；
@@ -251,25 +251,24 @@ def ask_with_context_stream_vllm_qwen(user_question, collection_name, top_k=Syst
     3. 使用中文标点，句间用顿号、逗号，结尾用句号；
     4. 表达应自然、口语化，适合朗读，不用术语解释或注释；
     5. 不使用 markdown 或符号（如 >、-、* 等）；
-    6. 回答应清晰、有条理，格式规范。
+    6. 回答应清晰、有条理，格式规范。"""
 
+    user_role = f"""
     【背景资料】
     {context}
 
     【用户问题】
     {user_question}
-
-    请根据以上信息，生成符合规范的回答。
     """
 
     payload = {
-      "model": "qwen-1.8b-awq",
+      "model": "Qwen1.5-1.8B-Chat-AWQ",
       "messages": [
-        {"role": "system", "content": "你是一个乐于助人的中文助手"},
-        {"role": "user", "content": "请介绍一下中国的四大发明"}
+        {"role": "system", "content": f"{system_role}"},
+        {"role": "user", "content": f"{user_role}"}
       ],
-      "temperature": 0.7,
-      "max_tokens": 128,
+      "temperature": 0.3,
+      "max_tokens": 512,
       "stream": True
     }
 
