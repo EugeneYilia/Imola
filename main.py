@@ -236,6 +236,7 @@ def ask_with_context_stream_vllm_qwen(user_question, collection_name, top_k=Syst
 
     if not results:
         context = "（未能从知识库中检索到相关资料）"
+        raise Exception(context)
     else:
         context = "\n".join([
             f"【{r.get('section', r.get('source', '未注明来源'))}】\n{r.get('content', r.get('text', str(r)))}"
@@ -279,9 +280,14 @@ def ask_with_context_stream_vllm_qwen(user_question, collection_name, top_k=Syst
     """
 
     payload = {
-        "model": model,
-        "prompt": prompt,
-        "stream": True  # 开启流模式
+      "model": "qwen-1.8b-awq",
+      "messages": [
+        {"role": "system", "content": "你是一个乐于助人的中文助手"},
+        {"role": "user", "content": "请介绍一下中国的四大发明"}
+      ],
+      "temperature": 0.7,
+      "max_tokens": 128,
+      "stream": True
     }
 
     logger.info(f"Request llm server payload: {payload}")
