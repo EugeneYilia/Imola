@@ -132,6 +132,104 @@ def is_punctuation(char):
     return unicodedata.category(char).startswith('P')
 
 # === 流式请求 Ollama（支持逐段返回）===
+def ask_with_context_stream_ollama_mistral(user_question, collection_name, model="mistral:7b-instruct", top_k=SystemConfig.default_top_k):
+    results = retrieve_from_qdrant(user_question, collection_name, top_k=top_k)
+    logger.info(f"qdrant results: {results}")
+
+    if not results:
+        context = "（未能从知识库中检索到相关资料）"
+    else:
+        context = "\n".join([
+            f"【{r.get('section', r.get('source', '未注明来源'))}】\n{r.get('content', r.get('text', str(r)))}"
+            for r in results
+        ])
+
+    prompt = f"""你是一个工程智能助手，请结合以下背景资料和用户问题，用**中文**回答用户问题。请严格遵循以下格式与要求：
+
+    1. 回答中必须完全使用中文，**禁止出现任何英文单词或术语**；
+        - 即使英文术语（如 depth、spacing、hole 等）出现在背景资料中，也必须翻译为中文；
+        - **特别强调：严禁出现“depth”、“spacing”、“hole”等词，即使模型认为更专业也不能使用，必须翻译为“深度”、“间距”、“孔号”等。**
+    2. 每句话长度**不能超过10个字符**，包括所有**数字、单位、标点、括号、引号**；
+        - 如果一句话超过10个字符，必须拆分为多句；
+        - 所有句子必须使用中文标点；
+        - 中间句子应使用逗号、顿号结尾，仅最后一句使用句号；
+    3. 若有较长的表达，请**分为多句短句**逐条输出；
+    4. 不需要解释术语、不要添加注释；
+    5. 语言风格应简洁、自然、口语化，适合朗读与语音播放；
+    6. 不得使用 markdown 或特殊符号（如 `>`, `-`, `*` 等）；
+    7. 你可以数一数每句字符是否超过10个，确保断句合理。
+
+    ⚠️ 注意：这不是建议，是必须遵守的硬性要求。
+
+    下面是一个不合格的回答示例（过长且包含英文）：
+    N3的实际邻孔间距在130米处为2626.32毫米，depth为130m。
+
+    请改为如下形式（合格）：
+    孔号为N3，  
+    邻孔间距在130米处，  
+    实际值是2626.32毫米。
+
+    请严格按这种形式回答，不得包含任何英文或特殊符号。
+
+    背景资料：
+    {context}
+
+    用户提问：
+    {user_question}
+
+    请根据上述要求，输出标准、专业、分句合理的中文回答。
+    """
+
+    payload = {
+        "model": model,
+        "prompt": prompt,
+        "stream": True  # 开启流模式
+    }
+
+    logger.info(f"Request llm server payload: {payload}")
+
+    try:
+        with requests.post(SystemConfig.ollama_url, json=payload, stream=True) as response:
+            if response.status_code != 200:
+                yield f"[错误] 请求失败: {response.status_code}"
+                return
+
+            response_buffer = ""
+            is_ready_to_send = False
+            # 一行一行读取响应内容
+            for line in response.iter_lines():
+                if line:
+                    try:
+                        # Ollama 的每一行是 JSON，如 {"response": "部分回答", "done": false}
+                        data = json.loads(line.decode("utf-8"))
+                        # logger.info(f"Request llm server response: {data}")
+                        response = data["response"].strip()
+                        if response != "" :
+                            if is_punctuation(response):
+                                response_buffer += response + "\n"
+                                is_ready_to_send = True
+                            else:
+                                if is_ready_to_send:
+                                    is_ready_to_send = False
+                                    chunked_response = response_buffer
+                                    response_buffer = response
+                                    logger.info(f"llm server response: {chunked_response}")
+                                    yield chunked_response
+                                else:
+                                    response_buffer += response
+                        if data.get("done"):
+                            chunked_response = response_buffer.removesuffix("\n") + "[Heil Hitler!]" + "\n"
+                            logger.info(f"llm server response: {chunked_response}")
+                            yield chunked_response
+                            break
+                    except Exception as e:
+                        logger.error(f"解析失败: {line} -> {e}")
+                        raise e
+    except Exception as e:
+        logger.error(f"[错误] 连接异常: {e}")
+        raise e
+
+# === 流式请求 Ollama（支持逐段返回）===
 def ask_with_context_stream(user_question, collection_name, model="mistral:7b-instruct", top_k=SystemConfig.default_top_k):
     results = retrieve_from_qdrant(user_question, collection_name, top_k=top_k)
     logger.info(f"qdrant results: {results}")
@@ -228,6 +326,7 @@ def ask_with_context_stream(user_question, collection_name, model="mistral:7b-in
     except Exception as e:
         logger.error(f"[错误] 连接异常: {e}")
         raise e
+
 
 # === API 路由 ===
 @app.post("/ask")
