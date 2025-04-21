@@ -262,7 +262,7 @@ def ask_with_context_stream_vllm_qwen(user_question, collection_name, top_k=Syst
     """
 
     payload = {
-      "model": "Qwen1.5-1.8B-Chat-AWQ",
+      "model": "/app/models/Qwen1.5-1.8B-Chat-AWQ",
       "messages": [
         {"role": "system", "content": f"{system_role}"},
         {"role": "user", "content": f"{user_role}"}
