@@ -63,8 +63,8 @@
 
     <label for="model">选择模型：</label>
     <select id="model">
+      <option value="Qwen1.5-1.8B-Chat-AWQ">Qwen1.5-1.8B-Chat-AWQ</option>
       <option value="mistral:7b-instruct">mistral:7b-instruct</option>
-      <option value="qwen:7b">qwen:7b</option>
       <option value="llama3">llama3</option>
     </select>
 
@@ -87,7 +87,7 @@
     resultDiv.innerHTML = "<p id='thinking'>⏳ 正在思考中...</p>";
 
     try {
-      const response = await fetch("http://localhost:8000/ask", {
+      const response = await fetch("http://localhost:8008/ask", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

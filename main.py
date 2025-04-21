@@ -288,7 +288,8 @@ def ask_with_context_stream_vllm_qwen(user_question, collection_name, top_k=Syst
                     try:
                         # Ollama 的每一行是 JSON，如 {"response": "部分回答", "done": false}
                         data = json.loads(line.decode("utf-8"))
-                        # logger.info(f"Request llm server response: {data}")
+                        logger.info(f"Request llm server response: {data}")
+
                         response = data["response"].strip()
                         if response != "" :
                             if is_punctuation(response):
@@ -344,7 +345,7 @@ if __name__ == "__main__":
         uvicorn.run(
             "main:app",
             host="0.0.0.0",
-            port=8000,
+            port=8008,
             reload=SystemConfig.is_dev_mode,
             log_config="log_config.yml"
         )
@@ -352,7 +353,7 @@ if __name__ == "__main__":
         uvicorn.run(
             app,
             host="0.0.0.0",
-            port=8000,
+            port=8008,
             reload=SystemConfig.is_dev_mode,
             log_config="log_config.yml"
         )
