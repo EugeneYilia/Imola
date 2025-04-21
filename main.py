@@ -287,29 +287,34 @@ def ask_with_context_stream_vllm_qwen(user_question, collection_name, top_k=Syst
             for line in response.iter_lines():
                 if line:
                     try:
-                        # Ollama 的每一行是 JSON，如 {"response": "部分回答", "done": false}
-                        data = json.loads(line.decode("utf-8"))
-                        logger.info(f"Request llm server response: {data}")
+                        line = line.decode("utf-8").strip()
 
-                        response = data["response"].strip()
-                        if response != "" :
-                            if is_punctuation(response):
-                                response_buffer += response + "\n"
-                                is_ready_to_send = True
-                            else:
-                                if is_ready_to_send:
-                                    is_ready_to_send = False
-                                    chunked_response = response_buffer
-                                    response_buffer = response
-                                    logger.info(f"llm server response: {chunked_response}")
-                                    yield chunked_response
-                                else:
-                                    response_buffer += response
-                        if data.get("done"):
+                        if line.endswith("[DONE]"):
                             chunked_response = response_buffer.removesuffix("\n") + "[Heil Hitler!]" + "\n"
                             logger.info(f"llm server response: {chunked_response}")
                             yield chunked_response
                             break
+
+                        data = json.loads(line.removeprefix("data: ").strip())
+                        logger.info(f"Request llm server response: {data}")
+
+                        choices = data["choices"]
+                        for choice in choices:
+                            response = choice["delta"].get("content", "")
+                            if response != "":
+                                if is_punctuation(response):
+                                    response_buffer += response + "\n"
+                                    is_ready_to_send = True
+                                else:
+                                    if is_ready_to_send:
+                                        is_ready_to_send = False
+                                        chunked_response = response_buffer
+                                        response_buffer = response
+                                        logger.info(f"llm server response: {chunked_response}")
+                                        yield chunked_response
+                                    else:
+                                        response_buffer += response
+
                     except Exception as e:
                         logger.error(f"解析失败: {line} -> {e}")
                         raise e
