@@ -275,8 +275,9 @@ def ask_with_context_stream_vllm_qwen(user_question, collection_name, top_k=Syst
     logger.info(f"Request llm server payload: {payload}")
 
     try:
-        with requests.post(SystemConfig.ollama_url, json=payload, stream=True) as response:
+        with requests.post(SystemConfig.vllm_url, json=payload, stream=True) as response:
             if response.status_code != 200:
+                logger.info(f"vllm server response: {response.status_code}")
                 yield f"[错误] 请求失败: {response.status_code}"
                 return
 
