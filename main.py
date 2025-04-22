@@ -251,7 +251,9 @@ def ask_with_context_stream_vllm_qwen(user_question, collection_name, top_k=Syst
     3. 使用中文标点，句间用顿号、逗号，结尾用句号；
     4. 表达应自然、口语化，适合朗读，不用术语解释或注释；
     5. 不使用 markdown 或符号（如 >、-、* 等）；
-    6. 回答应清晰、有条理，格式规范。"""
+    6. 回答应清晰、有条理，格式规范。
+    7. 仅根据背景资料的内容进行回答。"""
+
 
     user_role = f"""
     【背景资料】
