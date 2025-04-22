@@ -252,15 +252,19 @@ def ask_with_context_stream_vllm_qwen(user_question, collection_name, top_k=Syst
     4. 表达应自然、口语化，适合朗读，不用术语解释或注释；
     5. 不使用 markdown 或符号（如 >、-、* 等）；
     6. 回答应清晰、有条理，格式规范。
-    7. 仅根据背景资料的内容进行回答。"""
-
+    7. **回答只能基于背景资料原文内容，不允许添加、推理、想象或编造信息**；
+    8. **如果背景资料中未提及某信息，请不要进行任何补充**；"""
 
     user_role = f"""
-    【背景资料】
+    以下是用户提供的背景资料，请你仅根据资料回答后续问题：
+    <background>
     {context}
+    </background>
 
-    【用户问题】
+    用户的问题如下。请只用背景资料回答，不要引入背景之外的内容：
+    <question>
     {user_question}
+    </question>
     """
 
     payload = {
@@ -271,6 +275,7 @@ def ask_with_context_stream_vllm_qwen(user_question, collection_name, top_k=Syst
       ],
       "temperature": 0.3,
       "max_tokens": 700,
+      "top_p": 0.8,
       "stream": True
     }
 
