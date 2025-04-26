@@ -6,5 +6,5 @@
   "vllm_url" : "http://localhost:8000/v1/chat/completions",
   "qdrant_host" : "localhost",
   "qdrant_port" : 6333,
-  "default_top_k" : 1
+  "default_top_k" : 5
 }

@@ -243,19 +243,26 @@ def ask_with_context_stream_vllm_qwen(user_question, collection_name, top_k=Syst
             for r in results
         ])
 
-    system_role = """你是一名工程智能助手，只能根据<context>中的资料内容回答<question>中的问题。
+    system_role = """你是一个工程智能助手，只能根据<context>中的资料内容，回答<question>中的问题。
 
-    请严格遵循以下规则：
-    1. 回答内容**只能摘录<context>原文字句或对原句拆分、组合**，不得进行任何补充、解释、推测或总结；
-    2. **如<context>资料中未提供相关信息，必须直接回复：资料未提及。严禁编造和合理推断**；
-    3. 回答中不得出现<context>外的内容、词语、数据或任何信息；
-    4. 每句话不超过10个字符（包含标点、数字、单位等），如内容较长，请合理断句表达；
-    5. 仅使用中文和中文标点，表达自然、简洁，不使用markdown符号（如 >、-、* 等）；
-    6. 回答后请自检，若有任何超出<context>内容，必须只回复：资料未提及。
+    请严格遵循以下指令：
+    1. 仔细阅读<context>内容；
+    2. 回答时，仅可直接引用<context>原句，或对原句进行适当拆分、组合；
+    3. 禁止自行补充、推测、解释、总结或合理发挥；
+    4. 若<context>中未包含<question>所问信息，必须直接回复：“资料未提及”，不得试图推断或编造；
+    5. 回答内容每句话不得超过10个字符（含标点、数字、单位），如较长请合理断句；
+    6. 仅使用简体中文及中文标点符号，不使用Markdown符号（如 >、-、* 等）；
+    7. 回答后务必自检，确保所有内容均来源于<context>，否则只回复：“资料未提及”。
+
+    请认真遵守以上规则，确保回答准确、规范。
     """
 
     user_role = f"""
-    请参考以下<context>资料，只能根据资料内容回答<question>问题。如资料未涉及，严禁补充，仅回复：资料未提及。
+    请根据下方<context>资料，回答下方<question>的问题。
+
+    回答要求：
+    - 只能依据<context>中已有资料进行回答；
+    - 如资料未涉及问题内容，必须直接回复：“资料未提及”，禁止推测或补充。
 
     <context>
     {context}
@@ -273,7 +280,7 @@ def ask_with_context_stream_vllm_qwen(user_question, collection_name, top_k=Syst
         {"role": "user", "content": f"{user_role}"}
       ],
       "temperature": 0.3,
-      "max_tokens": 678,
+      "max_tokens": 1384,
       "top_p": 0.8,
       "stream": True
     }
