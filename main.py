@@ -281,6 +281,7 @@ def ask_with_context_stream_vllm_qwen(user_question, collection_name, top_k=Syst
 
 def request_remote_llm(system_role, user_role):
     from openai import OpenAI
+    logger.info("request_remote_llm")
 
     client = OpenAI(api_key=SystemConfig.deepseek_token, base_url=SystemConfig.remote_vllm_url)
 
@@ -332,6 +333,8 @@ def request_remote_llm(system_role, user_role):
         raise e
 
 def request_local_llm(system_role, user_role):
+    logger.info("request_local_llm")
+
     payload = {
         "model": "/app/models/Qwen1.5-1.8B-Chat-AWQ",
         "messages": [
