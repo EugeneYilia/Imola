@@ -87,7 +87,7 @@
     resultDiv.innerHTML = "<p id='thinking'>⏳ 正在思考中...</p>";
 
     try {
-      const response = await fetch("http://localhost:8008/ask", {
+      const response = await fetch("/ask", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
