@@ -273,38 +273,27 @@ def ask_with_context_stream_vllm_qwen(user_question, collection_name, top_k=Syst
     </question>
     """
 
-    payload = {
-      "model": "/app/models/Qwen1.5-1.8B-Chat-AWQ",
-      "messages": [
-        {"role": "system", "content": f"{system_role}"},
-        {"role": "user", "content": f"{user_role}"}
-      ],
-      "temperature": 0.3,
-      "max_tokens": 1384,
-      "top_p": 0.8,
-      "stream": True
-    }
-
-    logger.info(f"Request llm server payload: {payload}")
-
     if SystemConfig.use_local_llm:
-        yield from request_local_llm(payload)
+        yield from request_local_llm(system_role, user_role)
     else:
-        yield from request_remote_llm(payload)
+        yield from request_remote_llm(system_role, user_role)
 
 
-def request_remote_llm(payload):
+def request_remote_llm(system_role, user_role):
+    from openai import OpenAI
+
+    client = OpenAI(api_key="sk-741b3b474a434630b604cbde78b450a5", base_url="https://api.deepseek.com")
+
     try:
-        with requests.post(SystemConfig.remote_vllm_url, json=payload, stream=True) as response:
-            if response.status_code != 200:
-                logger.info(f"vllm server response: {response.status_code}")
-                yield f"[错误] 请求失败: {response.status_code}"
-                return
+        with client.chat.completions.create(
+                model="deepseek-chat",
+                messages=[{"role": "system", "content": system_role}, {"role": "user", "content": user_role}],
+                stream=True) as response:
 
             response_buffer = ""
             is_ready_to_send = False
             # 一行一行读取响应内容
-            for line in response.iter_lines():
+            for line in response():
                 if line:
                     try:
                         line = line.decode("utf-8").strip()
@@ -342,7 +331,21 @@ def request_remote_llm(payload):
         logger.error(f"[错误] 连接异常: {e}")
         raise e
 
-def request_local_llm(payload):
+def request_local_llm(system_role, user_role):
+    payload = {
+        "model": "/app/models/Qwen1.5-1.8B-Chat-AWQ",
+        "messages": [
+            {"role": "system", "content": f"{system_role}"},
+            {"role": "user", "content": f"{user_role}"}
+        ],
+        "temperature": 0.3,
+        "max_tokens": 1384,
+        "top_p": 0.8,
+        "stream": True
+    }
+
+    logger.info(f"Request llm server payload: {payload}")
+
     try:
         with requests.post(SystemConfig.local_vllm_url, json=payload, stream=True) as response:
             if response.status_code != 200:
