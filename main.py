@@ -294,7 +294,7 @@ def request_remote_llm(system_role, user_role):
             response_buffer = ""
             is_ready_to_send = False
             # 一行一行读取响应内容
-            for line in response():
+            for line in response:
                 if line:
                     try:
                         line = line.decode("utf-8").strip()
