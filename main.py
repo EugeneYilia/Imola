@@ -297,6 +297,7 @@ def request_remote_llm(system_role, user_role):
             for line in response:
                 if line:
                     try:
+                        print(line)
                         line = line.decode("utf-8").strip()
 
                         if line.endswith("[DONE]"):
