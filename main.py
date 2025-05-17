@@ -298,20 +298,17 @@ def request_remote_llm(system_role, user_role):
             for line in response:
                 if line:
                     try:
-                        print(line)
+                        logger.info(line)
 
-                        if line.endswith("[DONE]"):
+                        if line.choices[0].finish_reason == "stop":
                             chunked_response = response_buffer.removesuffix("\n") + "[Heil Hitler!]" + "\n"
                             logger.info(f"llm server response: {chunked_response}")
                             yield chunked_response
                             break
 
-                        data = json.loads(line.removeprefix("data: ").strip())
-                        logger.info(f"Request llm server response: {data}")
-
-                        choices = data["choices"]
+                        choices = line.choices
                         for choice in choices:
-                            response = choice["delta"].get("content", "")
+                            response = choice.delta.content
                             if response != "":
                                 if is_punctuation(response):
                                     response_buffer += response + "\n"
