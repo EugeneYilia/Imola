@@ -3,8 +3,10 @@
   "is_dev_mode": false,
   "model_name" : "BAAI/bge-large-zh",
   "ollama_url" : "http://localhost:11434/api/generate",
-  "vllm_url" : "http://localhost:8000/v1/chat/completions",
+  "local_vllm_url" : "http://localhost:8000/v1/chat/completions",
+  "remote_vllm_url" : "https://api.deepseek.com",
   "qdrant_host" : "localhost",
   "qdrant_port" : 6333,
-  "default_top_k" : 5
+  "default_top_k" : 5,
+  "use_local_llm" : false
 }

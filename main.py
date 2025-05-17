@@ -287,8 +287,64 @@ def ask_with_context_stream_vllm_qwen(user_question, collection_name, top_k=Syst
 
     logger.info(f"Request llm server payload: {payload}")
 
+    if SystemConfig.use_local_llm:
+        yield from request_local_llm(payload)
+    else:
+        yield from request_remote_llm(payload)
+
+
+def request_remote_llm(payload):
     try:
-        with requests.post(SystemConfig.vllm_url, json=payload, stream=True) as response:
+        with requests.post(SystemConfig.remote_vllm_url, json=payload, stream=True) as response:
+            if response.status_code != 200:
+                logger.info(f"vllm server response: {response.status_code}")
+                yield f"[错误] 请求失败: {response.status_code}"
+                return
+
+            response_buffer = ""
+            is_ready_to_send = False
+            # 一行一行读取响应内容
+            for line in response.iter_lines():
+                if line:
+                    try:
+                        line = line.decode("utf-8").strip()
+
+                        if line.endswith("[DONE]"):
+                            chunked_response = response_buffer.removesuffix("\n") + "[Heil Hitler!]" + "\n"
+                            logger.info(f"llm server response: {chunked_response}")
+                            yield chunked_response
+                            break
+
+                        data = json.loads(line.removeprefix("data: ").strip())
+                        logger.info(f"Request llm server response: {data}")
+
+                        choices = data["choices"]
+                        for choice in choices:
+                            response = choice["delta"].get("content", "")
+                            if response != "":
+                                if is_punctuation(response):
+                                    response_buffer += response + "\n"
+                                    is_ready_to_send = True
+                                else:
+                                    if is_ready_to_send:
+                                        is_ready_to_send = False
+                                        chunked_response = response_buffer
+                                        response_buffer = response
+                                        logger.info(f"llm server response: {chunked_response}")
+                                        yield chunked_response
+                                    else:
+                                        response_buffer += response
+
+                    except Exception as e:
+                        logger.error(f"解析失败: {line} -> {e}")
+                        raise e
+    except Exception as e:
+        logger.error(f"[错误] 连接异常: {e}")
+        raise e
+
+def request_local_llm(payload):
+    try:
+        with requests.post(SystemConfig.local_vllm_url, json=payload, stream=True) as response:
             if response.status_code != 200:
                 logger.info(f"vllm server response: {response.status_code}")
                 yield f"[错误] 请求失败: {response.status_code}"
