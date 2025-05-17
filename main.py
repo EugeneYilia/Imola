@@ -289,7 +289,8 @@ def request_remote_llm(system_role, user_role):
         with client.chat.completions.create(
                 model="deepseek-chat",
                 messages=[{"role": "system", "content": system_role}, {"role": "user", "content": user_role}],
-                stream=True) as response:
+                stream=True,
+                stream_options= { "include_usage" : False }) as response:
 
             response_buffer = ""
             is_ready_to_send = False
@@ -298,7 +299,6 @@ def request_remote_llm(system_role, user_role):
                 if line:
                     try:
                         print(line)
-                        line = line.decode("utf-8").strip()
 
                         if line.endswith("[DONE]"):
                             chunked_response = response_buffer.removesuffix("\n") + "[Heil Hitler!]" + "\n"
