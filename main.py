@@ -282,7 +282,7 @@ def ask_with_context_stream_vllm_qwen(user_question, collection_name, top_k=Syst
 def request_remote_llm(system_role, user_role):
     from openai import OpenAI
 
-    client = OpenAI(api_key="sk-741b3b474a434630b604cbde78b450a5", base_url="https://api.deepseek.com")
+    client = OpenAI(api_key=SystemConfig.deepseek_token, base_url=SystemConfig.remote_vllm_url)
 
     try:
         with client.chat.completions.create(
