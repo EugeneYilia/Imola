@@ -8,5 +8,5 @@
   "qdrant_host" : "localhost",
   "qdrant_port" : 6333,
   "default_top_k" : 5,
-  "use_local_llm" : false
+  "use_local_llm" : true
 }
